@@ -1,6 +1,8 @@
 # core
 openai
 numpy
+transformers
+torch
 
 # plotting
 matplotlib
