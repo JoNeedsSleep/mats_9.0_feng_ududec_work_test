@@ -22,6 +22,7 @@ python generate_chat.py
 ```bash
 bash run.bash
 ```
+
 ## File structure
 - `main.py`: Core ICM loop. Follows Algorithm 1 in the ICM paper and produces a json comparison of the acccuracy score of different methods. CLI flags allow configuration.
 - `call_hyperbolic.py`: Lightweight client for Hyperbolic `/v1/completions` and `/v1/chat/completions` endpoints with logprob utilities.

@@ -5,7 +5,7 @@ PYTHONPATH=$PYTHONPATH:$(pwd)
 source icm/bin/activate
 
 python3 main.py \
-    --iteration_num 50 \
+    --iteration_num 250 \
     --url https://api.hyperbolic.xyz/v1/completions \
     --model meta-llama/Meta-Llama-3.1-405B
 
