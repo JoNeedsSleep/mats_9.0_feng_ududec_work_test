@@ -111,7 +111,6 @@ def main(args):
     comparison_data['golden']['log_probs'] = llm.return_first_generated_token_logprobs(comparison_data['golden']['prompts'])
     comparison_data['zero_shot']['log_probs'] = llm.return_first_generated_token_logprobs(comparison_data['zero_shot']['prompts'])
     comparison_data['ICM']['accuracy'] = get_test_score(test_data, calculate_true_logprob_tot(comparison_data['ICM']['log_probs']), calculate_false_logprob_tot(comparison_data['ICM']['log_probs']))
-    print(comparison_data['ICM']['log_probs'])
     comparison_data['golden']['accuracy'] = get_test_score(test_data, calculate_true_logprob_tot(comparison_data['golden']['log_probs']), calculate_false_logprob_tot(comparison_data['golden']['log_probs']))
     comparison_data['zero_shot']['accuracy'] = get_test_score(test_data, calculate_true_logprob_tot(comparison_data['zero_shot']['log_probs']), calculate_false_logprob_tot(comparison_data['zero_shot']['log_probs']))
     print({key: comparison_data[key]['accuracy'] for key in comparison_data})

@@ -98,10 +98,8 @@ def get_test_score(test_data,list_of_true_probs,list_of_false_probs):
         label=0
         if list_of_true_probs[i] > list_of_false_probs[i]:
             label=1
-        print(label, test_data[i]['label'])
         if label==test_data[i]['label']:
             right_ans += 1
-            print("right")
     return (right_ans / len(test_data))
 
 def get_test_score_chat(chat_completions, test_data):
