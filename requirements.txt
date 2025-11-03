@@ -1,8 +1,6 @@
 # core
 openai
 numpy
-transformers
-torch
 
 # plotting
 matplotlib
@@ -11,3 +9,4 @@ seaborn
 # utilities
 tqdm
 tiktoken
+python-dotenv

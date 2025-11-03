@@ -1,0 +1,35 @@
+## Getting Set-UP
+
+1. Create a virtual environment
+```bash
+python -m venv icm
+source icm/bin/activate
+```
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+3. Configure environment variables
+```bash
+echo "HYPERBOLIC_API_KEY=your_api_key_here" > .env
+```
+4. Generate accuracy score for the chat baseline
+This will generate `result/chat_accuracy.json` which `util.py` will automatically use in its comparison.
+```bash
+python generate_chat.py
+```
+5. Run the main experiment and plot the results. Results will be saved to `result/comparison_data.json` and `result/truthfulqa_plot.png`.
+```bash
+bash run.bash
+```
+## File structure
+- `main.py`: Core ICM loop. Follows Algorithm 1 in the ICM paper and produces a json comparison of the acccuracy score of different methods. CLI flags allow configuration.
+- `call_hyperbolic.py`: Lightweight client for Hyperbolic `/v1/completions` and `/v1/chat/completions` endpoints with logprob utilities.
+- `util.py`: Data loading, prompt construction, scoring helpers, plotting functions used by `main.py` and scripts.
+- `generate_chat.py`: Quick baseline using chat completions over the test set, writes `result/chat_accuracy.json`.
+- `data/`: Input artifacts
+  - `truthfulqa_train.json`, `truthfulqa_test.json`: Train/test splits
+  - `chat_template.txt`: System/user template used for zero-shot baselines
+- `result/`: Outputs from runs (accuracies, comparisons)
+- `run.bash`: Convenience bash script to configure CLI flags and plot the results. 
+- `requirements.txt`: Python dependencies.

@@ -1,2 +1,12 @@
 .env
 __pycache__/
+
+# cache
+tmp/
+
+
+finetuning/
+test.py
+
+# virtual environment
+icm/

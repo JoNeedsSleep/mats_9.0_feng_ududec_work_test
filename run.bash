@@ -1,4 +1,12 @@
 #!/bin/bash
+PYTHONPATH=$PYTHONPATH:$(pwd)
+
+# Activate virtual environment
+source icm/bin/activate
+
 python3 main.py \
-    --model meta-llama/Llama-3.1-405B \
-    --iteration_num 1
+    --iteration_num 50 \
+    --url https://api.hyperbolic.xyz/v1/completions \
+    --model meta-llama/Meta-Llama-3.1-405B
+
+python3 plot_results.py --json_path result/comparison_data.json --output_path result/truthfulqa_plot.png --title TruthfulQA
