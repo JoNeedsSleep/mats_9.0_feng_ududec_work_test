@@ -17,6 +17,7 @@ import os
 from dotenv import load_dotenv
 import json
 from tqdm import tqdm
+import copy
 # Load environment variables from .env file
 load_dotenv()
 
@@ -27,7 +28,7 @@ def get_mutual_predictability_scores(D_list, llm):
     prompts = []
     for D in D_list:
         for sample in D:
-            D_setminus = D.copy()
+            D_setminus = copy.deepcopy(D)
             D_setminus.remove(sample)
             prompts.append(prep_prompt(D_setminus, sample['question'], sample['choice'], sample['y']))
     log_probs = llm.return_last_prompt_token_logprobs(prompts)
@@ -76,7 +77,7 @@ def main(args):
             label_to_evaluate = "True"
         else:
             label_to_evaluate = "False"
-        D_hat = D.copy()
+        D_hat = copy.deepcopy(D)
         D_hat.append({'question': sample['question'], 'choice': sample['choice'], 'label': sample['label'], 'y': label_to_evaluate})
         P = get_mutual_predictability_scores([D, D_hat], llm)
         if P[1] - P[0] > 0 or (random.random() < math.exp((P[1] - P[0]) / temperature)):
@@ -112,8 +113,8 @@ def main(args):
     comparison_data['golden']['accuracy'] = get_test_score(test_data, calculate_true_logprob_tot(comparison_data['golden']['log_probs']), calculate_false_logprob_tot(comparison_data['golden']['log_probs']))
     comparison_data['zero_shot']['accuracy'] = get_test_score(test_data, calculate_true_logprob_tot(comparison_data['zero_shot']['log_probs']), calculate_false_logprob_tot(comparison_data['zero_shot']['log_probs']))
     print({key: comparison_data[key]['accuracy'] for key in comparison_data})
-    with open('result/comparison_data.json', 'w') as f:
-        json.dump({key: comparison_data[key]['accuracy'] for key in comparison_data}, f, indent=4)
+    with open('result/comparison_data.jsonl', 'a') as f:
+        f.write(json.dumps({key: comparison_data[key]['accuracy'] for key in comparison_data}) + "\n")
 if __name__ == "__main__":
     args = arg_parse()
     main(args)

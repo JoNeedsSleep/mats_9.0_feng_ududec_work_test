@@ -4,6 +4,9 @@ import pprint
 import random
 from typing import List
 import matplotlib.pyplot as plt
+import copy
+import math
+from statistics import mean, stdev
 def load_data(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -19,7 +22,7 @@ def initialize_D(train_data, N=8):
     return samples_with_labels
 
 def D_to_D_golden(D, train_data):
-    D_golden = D.copy()
+    D_golden = copy.deepcopy(D)
     # find the sample in train_data with the same choice and then take the label of that sample and convert it to a string "True" or "False"
     for sample in D_golden:
         for sample_train in train_data:
@@ -112,28 +115,83 @@ def get_test_score_chat(chat_completions, test_data):
             right_ans += 1
     return (right_ans / len(test_data))
 
-def plot_truthfulqa_from_json(json_path: str = 'result/comparison_data.json', output_path: str | None = 'result/truthfulqa_plot.png', title: str = 'TruthfulQA') -> None:
+def plot_truthfulqa_from_jsonl(jsonl_path: str = 'result/comparison_data.jsonl', output_path: str | None = 'result/truthfulqa_plot.png', title: str = 'TruthfulQA', confidence: float = 0.95) -> None:
     """
-    Load accuracies from comparison_data.json and render a 4-bar chart matching the
-    style of the example figure. Values in JSON are expected in [0,1] and are
-    converted to percentages for display.
+    Load accuracies from a JSONL file where each line is a JSON object with
+    keys ['zero_shot', 'zero_shot_chat', 'ICM', 'golden'] and values in [0,1].
+    Compute mean accuracies and confidence intervals across runs, and plot.
     """
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-
     order = ['zero_shot', 'zero_shot_chat', 'ICM', 'golden']
     labels = ['Zero-shot', 'Zero-shot (chat)', 'ICM', 'Golden']
-    values = [round(float(data[k]) * 100, 2) for k in order]
+
+    per_method_values = {k: [] for k in order}
+    with open(jsonl_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            for k in order:
+                if k in obj and obj[k] is not None:
+                    try:
+                        per_method_values[k].append(float(obj[k]))
+                    except (TypeError, ValueError):
+                        pass
+
+    # Compute mean and symmetric CI using normal approximation on runs
+    def z_for_conf(conf: float) -> float:
+        # Two-sided normal quantile approximation
+        if conf >= 0.999:
+            return 3.29
+        if conf >= 0.995:
+            return 2.81
+        if conf >= 0.99:
+            return 2.58
+        if conf >= 0.975:
+            return 1.96
+        if conf >= 0.95:
+            return 1.96
+        if conf >= 0.90:
+            return 1.64
+        return 1.96
+
+    z = z_for_conf(confidence)
+    means = []
+    ci_margins = []
+    counts = []
+    for k in order:
+        vals = per_method_values[k]
+        n = len(vals)
+        counts.append(n)
+        if n == 0:
+            means.append(0.0)
+            ci_margins.append(0.0)
+            continue
+        m = mean(vals)
+        if n > 1:
+            s = stdev(vals)
+            margin = z * (s / math.sqrt(n))
+        else:
+            margin = 0.0
+        # Clip to [0,1] bounds in yerr later via min/max. Keep margin non-negative.
+        means.append(m)
+        ci_margins.append(max(0.0, margin))
+
+    # Convert to percentages
+    values_pct = [round(m * 100, 2) for m in means]
+    yerr_pct = [round(margin * 100, 2) for margin in ci_margins]
 
     colors = ['#B57BA6', '#B57BA6', '#79BDCB', '#E7B35B']
 
     fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=150)
-    bars = ax.bar(range(len(values)), values, color=colors, edgecolor='black', linewidth=1)
-    # Add dotted hatch to the second bar to echo the example style
+    bars = ax.bar(range(len(values_pct)), values_pct, color=colors, edgecolor='black', linewidth=1, yerr=yerr_pct, capsize=3)
     bars[1].set_hatch('..')
 
     ax.set_title(title, fontsize=14, pad=6)
-    ax.set_xticks(range(len(values)))
+    ax.set_xticks(range(len(values_pct)))
     ax.set_xticklabels(labels, rotation=20, ha='right', fontsize=9)
     ax.set_ylabel('Accuracy (%)', fontsize=10)
     ax.set_ylim(0, 100)
@@ -144,12 +202,11 @@ def plot_truthfulqa_from_json(json_path: str = 'result/comparison_data.json', ou
     ax.spines['left'].set_linewidth(0.8)
     ax.spines['bottom'].set_linewidth(0.8)
 
-    # Annotate values on top of bars
-    for bar, val in zip(bars, values):
+    # Annotate mean and N on top of bars
+    for bar, val, n in zip(bars, values_pct, counts):
         ax.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 1,
-                f"{val:.0f}", ha='center', va='bottom', fontsize=9)
+                "", ha='center', va='bottom', fontsize=8)
 
-    # Extra bottom margin so rotated labels don't clip/overlap
     fig.subplots_adjust(bottom=0.22)
     plt.tight_layout()
     if output_path:
