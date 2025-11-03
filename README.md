@@ -1,3 +1,5 @@
+![ICM Results](result/truthfulqa_plot.png)
+
 ## Getting Set-UP
 
 1. Create a virtual environment
