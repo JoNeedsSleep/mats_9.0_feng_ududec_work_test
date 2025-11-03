@@ -80,6 +80,8 @@ def main(args):
         D_hat = copy.deepcopy(D)
         D_hat.append({'question': sample['question'], 'choice': sample['choice'], 'label': sample['label'], 'y': label_to_evaluate})
         P = get_mutual_predictability_scores([D, D_hat], llm)
+        if P[1]==0 and P[0]==0:
+            continue
         if P[1] - P[0] > 0 or (random.random() < math.exp((P[1] - P[0]) / temperature)):
             D = D_hat
             
